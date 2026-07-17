@@ -1,0 +1,17 @@
+{
+  "name": "unfinished-business",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A durable, local-first work queue for Claude Code.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "check": "node scripts/check-public.mjs",
+    "check:release": "node scripts/check-public.mjs --release-history",
+    "test": "node --test",
+    "validate": "npm run check && npm test"
+  },
+  "license": "MIT"
+}

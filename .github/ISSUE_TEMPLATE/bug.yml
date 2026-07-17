@@ -1,0 +1,60 @@
+name: Bug report
+description: Report reproducible behavior in the app, CLI, hooks, MCP bridge, or skill.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste tokens, authentication files, real task content, private repository paths, or personal information. Replace them with synthetic values.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Skill workflow
+        - CLI
+        - Local server or storage
+        - Dashboard
+        - Hooks
+        - MCP bridge
+        - Installer
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use a temporary project and synthetic task content.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Windows version, Node version, Claude Code version
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Sanitized logs or notes
+      description: Remove usernames, home paths, tokens, task content, and organization details.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, personal information, real task content, and private paths.
+          required: true
+        - label: I searched for an existing report.
+          required: true

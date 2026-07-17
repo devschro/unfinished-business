@@ -1,0 +1,30 @@
+# Runtime state and credentials
+.env
+.env.*
+auth.json
+server.json
+registry.json
+audit.jsonl
+*.db
+*.sqlite
+*.sqlite3
+*.wal
+*.shm
+backups/
+spool/
+claude-config/
+
+# Private planning and local tool state
+.planning/
+.claude/
+.codex/
+HANDOFF.json
+.continue-here.md
+
+# Development output
+node_modules/
+coverage/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unfinished Business</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='8'%20fill='%23131418'/%3E%3Cpath%20d='M7%2010h8M17%2022h8M16%207v18'%20stroke='%232a78d6'%20stroke-width='2'/%3E%3Ccircle%20cx='7'%20cy='10'%20r='3'%20fill='%236cbfe6'/%3E%3Ccircle%20cx='25'%20cy='22'%20r='3'%20fill='%2331cd49'/%3E%3Cpath%20d='M16%206l4%204-4%204-4-4z'%20fill='%23e6e8ee'/%3E%3C/svg%3E">
+<meta name="color-scheme" content="dark">
+</head>
+<body>
+<div id="app">
+
+  <header id="hq">
+    <div id="hq-stage">
+      <div id="queue-agent-mount"></div>
+      <div id="agent-caption" aria-live="off">…</div>
+    </div>
+    <div id="hq-main">
+      <div id="hq-brand">
+        <h1>Unfinished <b>Business</b></h1>
+        <div id="hq-sub"><span id="project-name">…</span> · workspace</div>
+        <div id="hq-status"><span id="conn-dot" class="dot" title="server"></span><span id="state-label">connecting</span><span id="hooks-chip" class="hooks-chip" style="display:none"></span></div>
+      </div>
+      <div id="hq-tiles">
+        <button id="hq-case" class="tile case" style="display:none">
+          <span class="tile-label">Active task</span>
+          <span id="case-title">—</span>
+          <span class="case-bar"><span id="case-fill"></span></span>
+          <span id="case-sub" class="tile-foot"></span>
+        </button>
+        <div id="hq-idle" class="tile case idle-tile">
+          <span class="tile-label">Active task</span>
+          <span class="idle-line">No tasks running.</span>
+          <span class="tile-foot">Nothing queued yet.</span>
+        </div>
+        <div class="tile stat"><b id="stat-open">0</b><span class="tile-label">open tasks</span></div>
+        <div class="tile stat needs"><b id="stat-needs">0</b><span class="tile-label">need you</span></div>
+        <div class="tile stat ok"><b id="stat-closed">0</b><span class="tile-label">done today</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav id="commandbar">
+    <input id="search" type="search" placeholder="Search tasks…  ( / )" aria-label="Filter tasks">
+    <button id="ask-btn" class="btn" title="Ask a side question — a separate session answers without interrupting current work">? Ask</button>
+    <div class="cb-order">
+      <button id="order-btn" class="btn" title="A separate session determines the smartest execution order — it cannot edit or delete tasks">Optimize order <span class="cb-caret">▾</span></button>
+      <div class="cb-menu"><div class="cb-menu-inner">
+        <label class="toggle" title="Group independent tasks into parallel waves when ordering"><input type="checkbox" id="parallel-toggle"> Parallel waves</label>
+        <label class="toggle" title="When on, Optimize order proposes an order to Apply or Discard instead of applying immediately"><input type="checkbox" id="preview-toggle"> Preview before applying</label>
+      </div></div>
+    </div>
+    <button id="undo-order-btn" class="btn subtle" style="display:none" title="Restore previous order" aria-label="Undo last order change">Undo</button>
+    <button id="pause-btn" class="btn warn" aria-label="Pause work safely">Pause safely</button>
+    <button id="force-idle-btn" class="btn subtle" style="display:none" title="Stop the work loop now. Shows what unfinished work will be left behind, then confirms.">Force idle</button>
+    <button id="new-task-btn" class="btn primary" aria-label="Add a new task">+ New task</button>
+  </nav>
+
+  <div id="pause-banner" style="display:none"></div>
+  <div id="pending-schedule" style="display:none"></div>
+  <div id="jobs-strip" style="display:none"></div>
+  <div id="directives-strip" style="display:none"></div>
+  <section id="candidates" style="display:none"></section>
+
+  <nav id="tabs">
+    <button class="tab active" data-tab="queue">Queue</button>
+    <button class="tab" data-tab="activity">Activity</button>
+  </nav>
+
+  <main id="queue-view">
+    <section class="lane" id="lane-now"><h2>Now</h2><div class="lane-body"></div></section>
+    <section class="lane" id="lane-review"><h2>In review <span class="count"></span></h2><div class="lane-body"></div></section>
+    <section class="lane" id="lane-needs"><h2>Needs you</h2><div class="lane-body"></div></section>
+    <section class="lane" id="lane-next"><h2>Next</h2><div class="lane-body"></div></section>
+    <section class="lane" id="lane-later"><h2>Later</h2><div class="lane-body"></div></section>
+    <section class="lane collapsed" id="lane-cold"><h2 class="clickable">Snoozed <span class="count"></span></h2><div class="lane-body"></div></section>
+    <section class="lane collapsed" id="lane-done"><h2 class="clickable">Done <span class="count"></span></h2><div class="lane-body"></div></section>
+    <section class="lane collapsed" id="lane-archived"><h2 class="clickable">Archived <span class="count"></span></h2><div class="lane-body"></div></section>
+    <div id="empty-state" style="display:none">No open tasks. Add one, or run <code>/unfinished-business</code> in Claude Code.</div>
+  </main>
+
+  <main id="activity-view" style="display:none"></main>
+
+  <footer id="notebar">
+    <input id="note-input" type="text" placeholder="Send a note to Claude&#39;s work loop — picked up at the next task boundary…">
+    <button id="note-send" class="btn">Send</button>
+  </footer>
+
+  <div id="composer-overlay" style="display:none">
+    <section id="composer">
+      <h2>New task</h2>
+      <input id="c-title" type="text" placeholder="Plain-English task name" maxlength="300">
+      <textarea id="c-instructions" rows="5" placeholder="Detailed instructions — exactly what to do and how. The more here, the less the planner has to infer."></textarea>
+      <div class="composer-row">
+        <label>Priority
+          <select id="c-priority"><option value="5">5 — critical</option><option value="4">4 — high</option><option value="3" selected>3 — normal</option><option value="2">2 — low</option><option value="1">1 — someday</option></select>
+        </label>
+        <label>Size
+          <select id="c-size"><option value="trivial">trivial</option><option value="small" selected>small</option><option value="medium">medium</option><option value="large">large</option></select>
+        </label>
+        <label>Risk
+          <select id="c-risk"><option value="low" selected>low</option><option value="medium">medium</option><option value="high">high</option></select>
+        </label>
+        <label class="toggle prep-toggle"><input type="checkbox" id="c-prep" checked> Prepare with AI</label>
+        <label id="c-model-wrap">Model
+          <select id="c-model"><option value="adaptive" selected>adaptive</option><option value="opus">opus</option><option value="sonnet">sonnet</option><option value="haiku">haiku</option></select>
+        </label>
+      </div>
+      <details id="c-advanced">
+        <summary>Advanced — prompt the planning coordinator</summary>
+        <textarea id="c-directive" rows="3" placeholder="Optional instructions for the planning coordinator (the separate session that researches, scans, and plans this task)."></textarea>
+        <label>Preparation depth
+          <select id="c-prep-mode"><option value="full" selected>full — research + scan + councils + plan</option><option value="quick">quick — scan + plan</option></select>
+        </label>
+      </details>
+      <div class="composer-actions">
+        <button id="c-cancel" class="btn subtle">Cancel</button>
+        <button id="c-submit" class="btn primary">Add task</button>
+      </div>
+    </section>
+  </div>
+
+  <aside id="questions-drawer" class="closed" aria-label="Side questions">
+    <div class="qd-head">
+      <h2>Side questions</h2>
+      <button id="qd-close" class="btn subtle" aria-label="Close side questions">✕</button>
+    </div>
+    <div class="qd-compose">
+      <textarea id="ask-q" rows="3" placeholder="Ask anything — the codebase, project status, an external API… answered on the side while work continues."></textarea>
+      <div class="qd-compose-row">
+        <select id="ask-model" aria-label="Answering model"><option value="adaptive" selected>adaptive</option><option value="opus">opus</option><option value="sonnet">sonnet</option><option value="haiku">haiku</option></select>
+        <button id="ask-submit" class="btn primary">Ask</button>
+      </div>
+    </div>
+    <div id="questions-list"></div>
+  </aside>
+
+  <div id="inspector-backdrop" style="display:none"></div>
+  <aside id="inspector" style="display:none"></aside>
+  <div id="toast" style="display:none"></div>
+  <div id="picker" style="display:none"></div>
+</div>
+<script src="/queue-agent.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
