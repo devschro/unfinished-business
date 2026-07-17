@@ -11,7 +11,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { UI_COOKIE_NAME, createLaunchTickets, publicProjects, readCookie } from './security.mjs';
+import { UI_COOKIE_NAME, createLaunchTickets, publicHttpFailure, publicProjects, readCookie } from './security.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VERSION = '1.0.0';
@@ -1462,7 +1462,13 @@ function runHeadless({ prompt, schema, tools, allowed, timeout, model, effort, b
 }
 
 // ---------------------------------------------------------------- HTTP layer
-function httpErr(code, message, extra) { const e = new Error(message); e.statusCode = code; if (extra) e.body = extra; return e; }
+function httpErr(code, message, extra) {
+  const error = new Error('HTTP request rejected');
+  error.statusCode = code;
+  error.publicMessage = String(message);
+  if (extra) error.publicBody = extra;
+  return error;
+}
 
 // Loop ownership: the write path that DRIVES the loop (claim/complete a task, pull
 // the next task, pause/idle the loop) is reserved for the registered owning session.
@@ -2156,9 +2162,10 @@ const server = http.createServer(async (req, res) => {
     const body = isMutation ? await readBody(req) : {};
     await handler(req, res, url.searchParams, body, actor);
   } catch (e) {
-    const code = e.statusCode || 500;
+    const failure = publicHttpFailure(e);
+    const code = failure.code;
     if (code === 500) log('http 500', req.method, String(req.url).replace(/([?&]token=)[^&]*/g, '$1[redacted]'), e.stack || String(e));
-    if (!res.headersSent) send(res, code, { error: String(e.message || e), ...(e.body || {}) });
+    if (!res.headersSent) send(res, code, failure.payload);
   }
 });
 

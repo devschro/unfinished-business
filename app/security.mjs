@@ -33,6 +33,19 @@ export function publicProjects(projects, onlyId = null) {
     .map(p => ({ id: String(p.id || ''), name: String(p.name || '') }));
 }
 
+export function publicHttpFailure(error) {
+  const candidate = Number(error?.statusCode);
+  const code = Number.isInteger(candidate) && candidate >= 400 && candidate <= 599 ? candidate : 500;
+  const expose = typeof error?.publicMessage === 'string' && error.publicMessage.length > 0;
+  const details = expose && error.publicBody && typeof error.publicBody === 'object' && !Array.isArray(error.publicBody)
+    ? error.publicBody
+    : {};
+  return {
+    code,
+    payload: { ...details, error: expose ? error.publicMessage : 'internal server error' },
+  };
+}
+
 export function createLaunchTickets({ ttlMs = 120_000, now = () => Date.now(), randomToken } = {}) {
   const tickets = new Map();
   const token = randomToken || (() => crypto.randomBytes(24).toString('hex'));

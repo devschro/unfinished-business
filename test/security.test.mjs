@@ -8,6 +8,7 @@ import {
   coerceLoopbackPort,
   coerceServerPid,
   createLaunchTickets,
+  publicHttpFailure,
   publicProjects,
   readCookie,
 } from '../app/security.mjs';
@@ -50,6 +51,24 @@ test('publicProjects strips paths and all non-display registry fields', () => {
   ], 'one');
   assert.deepEqual(projects, [{ id: 'one', name: 'One' }]);
   assert.equal(JSON.stringify(projects).includes('private'), false);
+});
+
+test('unexpected server errors never expose messages or stack-derived paths', () => {
+  const unexpected = new Error('sensitive internal path');
+  unexpected.stack = 'stack with sensitive internal path';
+  assert.deepEqual(publicHttpFailure(unexpected), {
+    code: 500,
+    payload: { error: 'internal server error' },
+  });
+
+  const expected = new Error('internal diagnostic');
+  expected.statusCode = 409;
+  expected.publicMessage = 'revision conflict';
+  expected.publicBody = { expectedRev: 4 };
+  assert.deepEqual(publicHttpFailure(expected), {
+    code: 409,
+    payload: { expectedRev: 4, error: 'revision conflict' },
+  });
 });
 
 test('launch tickets are short-lived and one-use', () => {
